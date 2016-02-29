@@ -14,7 +14,7 @@ class Scraper:
 
     def parse_short(self):
         self.setup_soup("http://www.foosball.com/learn/rules/onepage/")
-        return self.short()
+        return self.__short()
 
     def setup_soup(self, url):
         html = requests.get(url).text
@@ -26,27 +26,38 @@ class Scraper:
         else:
             return [self.__dfs(i) for i in node.findChildren()]
 
-    def short(self):
-        tree = {}
-        current_rule = ""
+    def __short(self):
+        table = self.__get_tables()
+        rule_dict = self.__build_rule_dict(table)
+        self.__write_rules(rule_dict)
+
+    def __get_tables(self):
         tables = self.soup.findAll("td")
         table_one = re.split("[0-9]+\.", tables[0].text)
         table_two = re.split("[0-9]+\.", tables[1].text)
         table_one.extend(table_two)
+        return table_one
 
-        for i in table_one:
-            i = i.encode('ascii', 'ignore')
-            i = i.split("\n")
-            i = [j.strip("\t\r") for j in i]
-            rule_name = i[0].strip(" ")
+    def __build_rule_dict(self, html):
+        rule_dict = {}
+        for i in html:
+            i = self.__cleanup_string(i)
+            rule_name = i[0]
             rules = "".join(i[1:])
-            tree[rule_name] = re.split("[A-Z]\.", rules)
+            rule_dict[rule_name] = re.split("[A-Z]\.", rules)
+        return rule_dict
 
+    def __cleanup_string(self, string):
+        string = re.sub(' +',' ', string)
+        string = string.encode('ascii', 'ignore')
+        string = string.split("\n")
+        string = [j.strip("\t\r ") for j in string]
+        return string
+
+    def __write_rules(self, rule_dict):
         with open('rules.json', 'w') as f:
-                json.dump(tree, f)
+            json.dump(rule_dict, f)
 
-    def startsWithNumber(self, i):
-        return i[0].isdigit()
 
 if __name__ == "__main__":
     scrape = Scraper().parse_short()
