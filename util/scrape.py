@@ -20,17 +20,21 @@ class Scraper:
         html = requests.get(url).text
         self.soup = BeautifulSoup(html, 'lxml')
 
+    #perform a dfs and make a list of lists representing a tree of
+    #rules
     def __dfs(self, node):
         if len(node.contents) <= 1:
             return node.text.replace("\n", "").replace("\r", "")
         else:
             return [self.__dfs(i) for i in node.findChildren()]
 
+    #implementation of the short parse method
     def __short(self):
         table = self.__get_tables()
         rule_dict = self.__build_rule_dict(table)
         self.__write_rules(rule_dict)
 
+    #Gets parses out both tables and divides them based on rule number
     def __get_tables(self):
         tables = self.soup.findAll("td")
         table_one = re.split("[0-9]+\.", tables[0].text)
@@ -38,6 +42,7 @@ class Scraper:
         table_one.extend(table_two)
         return table_one
 
+    #Given the the table html from get_tables, build up the rule dictionary
     def __build_rule_dict(self, html):
         rule_dict = {}
         for i in html:
@@ -47,6 +52,7 @@ class Scraper:
             rule_dict[rule_name] = re.split("[A-Z]\.", rules)
         return rule_dict
 
+    #Remove extra whitespace and non-ascii characters from rule elements
     def __cleanup_string(self, string):
         string = re.sub(' +',' ', string)
         string = string.encode('ascii', 'ignore')
@@ -54,6 +60,7 @@ class Scraper:
         string = [j.strip("\t\r ") for j in string]
         return string
 
+    #Write rules to json
     def __write_rules(self, rule_dict):
         with open('rules.json', 'w') as f:
             json.dump(rule_dict, f)
