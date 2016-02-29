@@ -4,6 +4,7 @@
 from bs4 import BeautifulSoup
 import json
 import requests
+import re
 
 class Scraper:
 
@@ -29,17 +30,20 @@ class Scraper:
         tree = {}
         current_rule = ""
         tables = self.soup.findAll("td")
-        table_list = tables[0].text.split("\n")
-        table_list.extend(tables[1].text.split("\n"))
+        table_one = re.split("[0-9]+\.", tables[0].text)
+        table_two = re.split("[0-9]+\.", tables[1].text)
+        table_one.extend(table_two)
 
-        for i in tables:
-            i = i.strip()
-            if self.startsWithNumber(i):
-                current_rule = i
-                tree[current_rule] = []
-            else:
-                tree[current_rule].append(i)
-        print tree
+        for i in table_one:
+            i = i.encode('ascii', 'ignore')
+            i = i.split("\n")
+            i = [j.strip("\t\r") for j in i]
+            rule_name = i[0].strip(" ")
+            rules = "".join(i[1:])
+            tree[rule_name] = re.split("[A-Z]\.", rules)
+
+        with open('rules.json', 'w') as f:
+                json.dump(tree, f)
 
     def startsWithNumber(self, i):
         return i[0].isdigit()
