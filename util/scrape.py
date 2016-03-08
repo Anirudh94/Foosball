@@ -21,7 +21,7 @@ class Scraper:
     def setup_soup(self, url):
         """initializes the soup object given a url"""
         html = requests.get(url).text
-        self.soup = BeautifulSoup(html, 'lxml')
+        self.soup = BeautifulSoup(html, "lxml")
 
     def _dfs(self, node):
         """
@@ -59,15 +59,15 @@ class Scraper:
 
     def _cleanup_string(self, string):
         """cleanup gunk on strings new lines, tabs carriage returns etc"""
-        string = re.sub(' +',' ', string)
-        string = string.encode('ascii', 'ignore')
+        string = re.sub(" +"," ", string)
+        string = string.encode("ascii", "ignore")
         string = string.split("\n")
         string = [j.strip("\t\r ") for j in string]
         return string
 
     def _write_rules(self, rule_dict):
         """write the rules to a json file"""
-        with open('rules.json', 'w') as f:
+        with open("rules.json", "w") as f:
             json.dump(rule_dict, f)
 
 
