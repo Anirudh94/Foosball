@@ -1,67 +1,72 @@
-#Scrapes foosball rules from the official foosball website
-#and produces a rules.json file.
-
 from bs4 import BeautifulSoup
 import json
 import requests
 import re
 
 class Scraper:
-
+    """
+    Scrapes foosball rules from the official foosball website
+    and produces a rules.json file.
+    """
     def parse_long(self):
+        """Parses the long rules list"""
         self.setup_soup("http://www.foosball.com/learn/rules/ustsa/")
-        return self.__dfs(self.soup.ol)
+        return self._dfs(self.soup.ol)
 
     def parse_short(self):
+        """Parses the short rules list"""
         self.setup_soup("http://www.foosball.com/learn/rules/onepage/")
-        return self.__short()
+        return self._short()
 
     def setup_soup(self, url):
+        """initializes the soup object given a url"""
         html = requests.get(url).text
         self.soup = BeautifulSoup(html, 'lxml')
 
-    #perform a dfs and make a list of lists representing a tree of
-    #rules
-    def __dfs(self, node):
+    def _dfs(self, node):
+        """
+        perform a dfs and make a list of lists representing a tree of
+        rules
+        """
         if len(node.contents) <= 1:
             return node.text.replace("\n", "").replace("\r", "")
         else:
-            return [self.__dfs(i) for i in node.findChildren()]
+            return [self._dfs(i) for i in node.findChildren()]
 
-    #implementation of the short parse method
-    def __short(self):
-        table = self.__get_tables()
-        rule_dict = self.__build_rule_dict(table)
-        self.__write_rules(rule_dict)
+    def _short(self):
+        """implmentation method for short html parse"""
+        table = self._get_tables()
+        rule_dict = self._build_rule_dict(table)
+        self._write_rules(rule_dict)
 
-    #Gets parses out both tables and divides them based on rule number
-    def __get_tables(self):
+    def _get_tables(self):
+        """get the table html text from the rules list"""
         tables = self.soup.findAll("td")
         table_one = re.split("[0-9]+\.", tables[0].text)
         table_two = re.split("[0-9]+\.", tables[1].text)
         table_one.extend(table_two)
         return table_one
 
-    #Given the the table html from get_tables, build up the rule dictionary
-    def __build_rule_dict(self, html):
+    def _build_rule_dict(self, html):
+        """build the tree of rules as a dictionary"""
         rule_dict = {}
         for i in html:
-            i = self.__cleanup_string(i)
+            i = self._cleanup_string(i)
             rule_name = i[0]
             rules = "".join(i[1:])
             rule_dict[rule_name] = re.split("[A-Z]\.", rules)
         return rule_dict
 
-    #Remove extra whitespace and non-ascii characters from rule elements
-    def __cleanup_string(self, string):
+    def _cleanup_string(self, string):
+        """cleanup gunk on strings new lines, tabs carriage returns etc"""
         string = re.sub(' +',' ', string)
         string = string.encode('ascii', 'ignore')
         string = string.split("\n")
         string = [j.strip("\t\r ") for j in string]
         return string
 
-    #Write rules to json
-    def __write_rules(self, rule_dict):
+    def _write_rules(self, rule_dict):
+        """write the rules to a json file"""
         with open('rules.json', 'w') as f:
             json.dump(rule_dict, f)
 
