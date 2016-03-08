@@ -19,13 +19,13 @@ class Scraper:
         return self._short()
 
     def setup_soup(self, url):
-        """initializes the soup object given a url"""
+        """Initializes the soup object given a url"""
         html = requests.get(url).text
         self.soup = BeautifulSoup(html, "lxml")
 
     def _dfs(self, node):
         """
-        perform a dfs and make a list of lists representing a tree of
+        Perform a dfs and make a list of lists representing a tree of
         rules
         """
         if len(node.contents) <= 1:
@@ -34,13 +34,13 @@ class Scraper:
             return [self._dfs(i) for i in node.findChildren()]
 
     def _short(self):
-        """implmentation method for short html parse"""
+        """Implmentation method for short html parse"""
         table = self._get_tables()
         rule_dict = self._build_rule_dict(table)
         self._write_rules(rule_dict)
 
     def _get_tables(self):
-        """get the table html text from the rules list"""
+        """Get the table html text from the rules list"""
         tables = self.soup.findAll("td")
         table_one = re.split("[0-9]+\.", tables[0].text)
         table_two = re.split("[0-9]+\.", tables[1].text)
@@ -48,7 +48,7 @@ class Scraper:
         return table_one
 
     def _build_rule_dict(self, html):
-        """build the tree of rules as a dictionary"""
+        """Build the tree of rules as a dictionary"""
         rule_dict = {}
         for i in html:
             i = self._cleanup_string(i)
@@ -58,7 +58,7 @@ class Scraper:
         return rule_dict
 
     def _cleanup_string(self, string):
-        """cleanup gunk on strings new lines, tabs carriage returns etc"""
+        """Cleanup gunk on strings new lines, tabs carriage returns etc"""
         string = re.sub(" +"," ", string)
         string = string.encode("ascii", "ignore")
         string = string.split("\n")
@@ -66,7 +66,7 @@ class Scraper:
         return string
 
     def _write_rules(self, rule_dict):
-        """write the rules to a json file"""
+        """Write the rules to a json file"""
         with open("rules.json", "w") as f:
             json.dump(rule_dict, f)
 
